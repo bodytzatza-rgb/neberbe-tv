@@ -27,6 +27,16 @@ if BUILD and not re.fullmatch(r'[0-9a-f]{7,40}', BUILD):
 def add(files, arc, data, mode=0o644):
     files.append((arc, data, mode))
 
+def read_bytes(p, text=False):
+    body = open(p, 'rb').read()
+    if text:
+        body = body.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    return body
+
+def is_text_name(n):
+    return n.endswith(('.sh', '.js', '.json', '.md', '.html', '.css')) or n in (
+        '10-cleanyourtv-home', '15-cleanyourtv-debloat')
+
 def add_dir(files, arc_root, src, mode_for=None, skip=(), skip_dirs=()):
     for root, dirs, names in os.walk(src):
         dirs[:] = [d for d in dirs if d not in skip_dirs]   # e.g. app/src: the launcher's sources, built into app/index.html
@@ -36,7 +46,7 @@ def add_dir(files, arc_root, src, mode_for=None, skip=(), skip_dirs=()):
             p = os.path.join(root, n)
             rel = os.path.relpath(p, src)
             mode = 0o755 if (n.endswith('.sh') or n in ('ezinject', '10-cleanyourtv-home', '15-cleanyourtv-debloat')) else 0o644
-            body = open(p, 'rb').read()
+            body = read_bytes(p, is_text_name(n))
             add(files, arc_root + '/' + rel, body, mode)
 
 def tgz(files, prefix=''):
@@ -73,26 +83,26 @@ for app_id, src in (('com.cleanyourtv.manager', 'manager/app'), ('com.cleanyourt
     d = '/usr/palm/applications/' + app_id
     for root, _, names in os.walk(P(src)):
         for n in sorted(names):
-            p = os.path.join(root, n); rel = os.path.relpath(p, P(src)); body = open(p, 'rb').read()
+            p = os.path.join(root, n); rel = os.path.relpath(p, P(src)); body = read_bytes(p, is_text_name(n))
             if n == 'appinfo.json' and app_id == PKG:   # the package version is the service version
                 o = json.loads(body); o['version'] = version; body = json.dumps(o).encode()
             add(data, '.' + d + '/' + rel, body)
-add(data, './usr/palm/applications/com.cleanyourtv.manager/qrcode.js', open(P('third-party', 'qrcode-generator', 'qrcode.js'), 'rb').read())   # QR code for sharing the log
+add(data, './usr/palm/applications/com.cleanyourtv.manager/qrcode.js', read_bytes(P('third-party', 'qrcode-generator', 'qrcode.js'), True))   # QR code for sharing the log
 s = '.' + '/usr/palm/services/' + SERVICE
-add(data, s + '/bootstrap.sh', open(P('scripts', 'bootstrap.sh'), 'rb').read(), 0o755)
+add(data, s + '/bootstrap.sh', read_bytes(P('scripts', 'bootstrap.sh'), True), 0o755)
 add_dir(data, s + '/helper', P('helper'))
 add_dir(data, s + '/scripts', P('scripts'), skip=('bootstrap.sh',))
-add(data, s + '/scripts/uninstall.sh', open(P('uninstall.sh'), 'rb').read(), 0o755)
+add(data, s + '/scripts/uninstall.sh', read_bytes(P('uninstall.sh'), True), 0o755)
 add(data, s + '/voice/cytv-asr', open(P('voice', 'cytv-asr'), 'rb').read(), 0o755)   # optional voice feature: downloads its engine on request
 add(data, s + '/inputhook/ezinject', open(P('third-party', 'inputhook', 'ezinject'), 'rb').read(), 0o755)
 add(data, s + '/inputhook/libinputhookpp.so', open(P('third-party', 'inputhook', 'libinputhookpp.so'), 'rb').read())
 for n in sorted(os.listdir(P('third-party', 'inputhook'))):
     if n.startswith('LICENSE') or n == 'SHA256SUMS':
         add(data, s + '/licenses/' + n, open(P('third-party', 'inputhook', n), 'rb').read())
-add(data, s + '/licenses/THIRD-PARTY.md', open(P('THIRD-PARTY.md'), 'rb').read())
-add(data, s + '/licenses/LICENSE', open(P('LICENSE'), 'rb').read())
-add(data, s + '/compat.json', open(P('compat.json'), 'rb').read())
-add(data, s + '/config.example.json', open(P('config.example.json'), 'rb').read())
+add(data, s + '/licenses/THIRD-PARTY.md', read_bytes(P('THIRD-PARTY.md'), True))
+add(data, s + '/licenses/LICENSE', read_bytes(P('LICENSE'), True))
+add(data, s + '/compat.json', read_bytes(P('compat.json'), True))
+add(data, s + '/config.example.json', read_bytes(P('config.example.json'), True))
 add_dir(data, s + '/payload/app', P('app'), skip_dirs=('src',))
 if BUILD:
     add(data, s + '/BUILD', (BUILD + '\n').encode())

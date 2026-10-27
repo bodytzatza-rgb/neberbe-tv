@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.sh text eol=lf
+scripts/10-cleanyourtv-home text eol=lf
+scripts/15-cleanyourtv-debloat text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.so binary
+voice/cytv-asr binary
+third-party/inputhook/ezinject binary
