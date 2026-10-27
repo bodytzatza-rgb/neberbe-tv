@@ -10,7 +10,7 @@
 #   can switch back to the stable releases (Update channel). CYTV_BRANCH=<anything>, from before the dev builds, means the same.
 
 main() {
-  REPO="${CYTV_REPO:-lasharor/cleanyourtv-WebOS}"
+  REPO="${CYTV_REPO:-bodytzatza-rgb/neberbe-tv}"
   ID=com.cleanyourtv.manager
   export PATH=/usr/bin:/usr/sbin:/bin:/sbin:$PATH
   say() { echo "[cleanyourtv] $*"; }
